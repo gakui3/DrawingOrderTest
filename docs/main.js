@@ -29,7 +29,7 @@ function addLight() {
 
 function addObject() {
   const geometry_inner = new THREE.CylinderGeometry(1, 1, 5, 20, 25, true);
-  const geometry_outer = new THREE.CylinderGeometry(1.1, 1.1, 5, 20, 25, true);
+  const geometry_outer = new THREE.CylinderGeometry(1.01, 1.01, 5, 20, 25, true);
 
   const geometry_dammy = new THREE.BoxGeometry(1, 1);
 
