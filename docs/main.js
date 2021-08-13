@@ -1,3 +1,22 @@
+/*
+重要な部分はaddObject関数内の処理になります。
+内側の実際に描画される用のcylinder_inner,cylinder_middleオブジェクトと外側のマスク用のcylinder_outerオブジェクトで構成されています。
+
+重要なポイント
+描画順が大切です。outer→inner,middleのオブジェクトの順番に描画することで、outerのオブジェクトが透明で描画されていないが、
+depthは書き込まれているのでinner,middleのオブジェクトが描画される際に、depthtestが走り、外側は描画されないという仕組みになっています。
+
+120 : cylinder_outer.renderOrder = -1;
+
+上記の処理をすることで明示的にouterオブジェクトをinnerオブジェクトの前に描画するようにしています。
+
+
+また、inner,middle用のマテリアルは不透明の場合でも
+85,92 : transparent: true,
+86,93 : opacity: 1,
+は記述してください。これがないと、outerのrenderOrderを変更しても描画順がouter→innerの順になりません。
+*/
+
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
@@ -28,46 +47,68 @@ function addLight() {
 }
 
 function addObject() {
-  const geometry_inner = new THREE.CylinderGeometry(1, 1, 5, 20, 25, true);
-  const geometry_outer = new THREE.CylinderGeometry(1.01, 1.01, 5, 20, 25, true);
-
+  const geometry_innerMask = new THREE.CylinderGeometry(0.59, 0.59, 5, 20, 25, true, 0, 3.14);
+  const geometry_inner = new THREE.CylinderGeometry(0.6, 0.6, 5, 20, 25, true, 0, 3.14);
+  const geometry_outerMask = new THREE.CylinderGeometry(1.01, 1.01, 5, 20, 25, true, 0, 3.14);
+  const geometry_outer = new THREE.CylinderGeometry(1.0, 1.0, 5, 20, 25, true, 0, 3.14);
   const geometry_dammy = new THREE.BoxGeometry(1, 1);
 
   const material_inner = new THREE.MeshPhongMaterial({
-    color: 0xffa500,
+    color: 0x0000ff,
     transparent: true,
     opacity: 1,
     side: THREE.DoubleSide,
-    depthWrite: true,
+  });
+
+  const material_innerMask = new THREE.MeshPhongMaterial({
+    color: 0x0000ff,
+    transparent: true,
+    opacity: 0,
+    side: THREE.DoubleSide,
   });
 
   const material_outer = new THREE.MeshPhongMaterial({
     color: 0xffa500,
     transparent: true,
-    opacity: 0,
+    opacity: 1,
     side: THREE.DoubleSide,
-    depthWrite: true,
+  });
+
+  const material_outerMask = new THREE.MeshPhongMaterial({
+    color: 0xffa500,
+    transparent: true,
+    opacity: 0,
   });
 
   const mat = new THREE.MeshPhongMaterial({
     color: 0xff0000,
-    side: THREE.DoubleSide,
-    depthWrite: true,
   });
 
   const cylinder_inner = new THREE.Mesh(geometry_inner, material_inner);
+  const cylinder_innerMask = new THREE.Mesh(geometry_innerMask, material_innerMask);
   const cylinder_outer = new THREE.Mesh(geometry_outer, material_outer);
+  const cylinder_outerMask = new THREE.Mesh(geometry_outerMask, material_outerMask);
   const box_dammy_left = new THREE.Mesh(geometry_dammy, mat);
   const box_dammy_right = new THREE.Mesh(geometry_dammy, mat);
 
-  cylinder_outer.rotateX(3.14 / 2);
   cylinder_inner.rotateX(3.14 / 2);
+  cylinder_innerMask.rotateX(3.14 / 2);
+  cylinder_outer.rotateX(3.14 / 2);
+  cylinder_outerMask.rotateX(3.14 / 2);
+  cylinder_inner.rotateY(3.14 / 2);
+  cylinder_innerMask.rotateY(3.14 / 2);
+  cylinder_outer.rotateY(3.14 / 2);
+  cylinder_outerMask.rotateY(3.14 / 2);
+
   box_dammy_left.position.set(3, 0, 0);
   box_dammy_right.position.set(-3, 0, 0);
 
-  //important!
-  cylinder_outer.renderOrder = -1;
+  //重要！
+  cylinder_outerMask.renderOrder = -1;
+  cylinder_innerMask.renderOrder = -2;
 
+  scene.add(cylinder_outerMask);
+  scene.add(cylinder_innerMask);
   scene.add(cylinder_inner);
   scene.add(cylinder_outer);
   scene.add(box_dammy_left);
